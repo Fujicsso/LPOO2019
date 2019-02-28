@@ -3,6 +3,4 @@
 **/out/
 **/build/
 **/*.iml
-.DS_Storeout/
-.idea/
-*.iml
+.DS_Store
