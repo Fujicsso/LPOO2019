@@ -2,63 +2,69 @@ import com.googlecode.lanterna.*;
 import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.screen.Screen;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class Arena {
     private int height;
     private int width;
     private Hero hero;
+    private Monster monster;
     private List<Wall> walls;
+    private List<Coin> coins;
 
     public Arena(int height, int width){
         this.height = height;
         this.width = width;
         this.hero = new Hero(10, 10);
+        this.monster = new Monster(25, 15);
         this.walls = createWalls();
+        this.coins = createCoins();
     }
 
-    public boolean processKey(KeyStroke key) throws IOException {
-        System.out.println(key);
+    boolean processKey(KeyStroke key) {
         if (key.getKeyType() == KeyType.ArrowDown){
-            moveHero(hero.moveDown());
+            return moveHero(hero.moveDown());
         } else if (key.getKeyType() == KeyType.ArrowUp){
-            moveHero(hero.moveUp());
+            return moveHero(hero.moveUp());
         } else if (key.getKeyType() == KeyType.ArrowLeft){
-            moveHero(hero.moveLeft());
+            return moveHero(hero.moveLeft());
         } else if (key.getKeyType() == KeyType.ArrowRight){
-            moveHero(hero.moveRight());
+            return moveHero(hero.moveRight());
         } else if (key.getKeyType() == KeyType.Character && key.getCharacter() == 'q'){
             return true;
-        } else if (key.getKeyType() == KeyType.EOF){
-            return true;
         }
-        return false;
+        return key.getKeyType() == KeyType.EOF;
     }
 
-    public void draw(TextGraphics graphics){
+    void draw(TextGraphics graphics){
         graphics.setBackgroundColor(TextColor.Factory.fromString("#336699"));
         graphics.fillRectangle(new TerminalPosition(0, 0), new TerminalSize(width, height), ' ');
-        hero.draw(graphics);
         for (Wall wall : walls)
             wall.draw(graphics);
+        for (Coin coin : coins)
+            coin.draw(graphics);
+        hero.draw(graphics);
+        monster.draw(graphics);
     }
 
-    public void moveHero(Position position) {
+    private boolean moveHero(Position position) {
         if (canHeroMove(position))
             hero.setPosition(position);
+        moveMonsters();
+        retrieveCoin();
+        return verifyMonsterCollisions();
     }
+
+
 
     private boolean canHeroMove(Position position) {
         for (Wall wall : walls)
-            if (wall.getPosition().getY() == position.getY() && wall.getPosition().getX() == position.getX())
+            if (wall.getPosition().equals(position))
                 return false;
-        if (position.getX() >= 0 && position.getX() < width && position.getY() >= 0 && position.getY() < height)
-            return true;
-        return false;
+        return position.getX() >= 0 && position.getX() < width && position.getY() >= 0 && position.getY() < height;
     }
 
     private List<Wall> createWalls() {
@@ -75,5 +81,46 @@ public class Arena {
         }
 
         return walls;
+    }
+
+    private List<Coin> createCoins() {
+        Random random = new Random();
+        ArrayList<Coin> coins = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Coin c = new Coin(random.nextInt(width - 2) + 1, random.nextInt(height - 2) + 1);
+            for (int j = 0; j < i; j++){
+                if (c.position.equals(coins.get(j).position)){
+                    c.position = hero.position;
+                    i--;
+                    break;
+                }
+            }
+            if (c.position.equals(hero.position)) {
+                i--;
+                continue;
+            }
+            coins.add(c);
+        }
+        return coins;
+    }
+
+    private void retrieveCoin() {
+        for (Coin coin : coins){
+            if (hero.position.equals(coin.position)) {
+                coins.remove(coin);
+                break;
+            }
+        }
+    }
+
+    private void moveMonsters(){
+        monster.setPosition(monster.move(hero.getPosition()));
+    }
+
+    private boolean verifyMonsterCollisions(){
+        boolean res = monster.position.equals(hero.position);
+        if (res)
+            System.out.println("Lost game");
+        return res;
     }
 }
