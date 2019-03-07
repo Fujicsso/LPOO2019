@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 class Arena {
-    private Game game;
+    private GameMap gameMap;
     private int height;
     private int width;
     private Hero hero;
@@ -16,11 +16,11 @@ class Arena {
     private List<Wall> walls;
     private List<Coin> coins;
 
-    Arena(Game game, int height, int width){
-        this.game = game;
+    Arena(GameMap gameMap, Hero hero, int height, int width){
+        this.gameMap = gameMap;
         this.height = height;
         this.width = width;
-        this.hero = new Hero(10, 10);
+        this.hero = hero;
         this.monsters = createMonsters();
         this.walls = createWalls();
         this.coins = createCoins();
@@ -36,9 +36,9 @@ class Arena {
         } else if (key.getKeyType() == KeyType.ArrowRight){
             moveHero(hero.moveRight());
         } else if (key.getKeyType() == KeyType.Character && key.getCharacter() == 'q'){
-            game.exitGame();
+            gameMap.leaveGame();
         } else if (key.getKeyType() == KeyType.EOF)
-            game.exitGame();
+            gameMap.leaveGame();
     }
 
     void draw(TextGraphics graphics){
@@ -61,6 +61,7 @@ class Arena {
         moveMonsters();
         retrieveCoin();
         verifyMonsterCollisions();
+        enterDoor();
     }
 
 
@@ -135,6 +136,8 @@ class Arena {
             if (hero.position.equals(coin.position)) {
                 coins.remove(coin);
                 hero.increaseScore();
+                if (coins.size() == 0)
+                    openDoors();
                 break;
             }
         }
@@ -153,7 +156,26 @@ class Arena {
             }
         if (!hero.isAlive()) {
             System.out.println("Lost game");
-            game.exitGame();
+            gameMap.leaveGame();
+        }
+    }
+
+    private void enterDoor(){
+        if (hero.getPosition().getX() == 0 || hero.getPosition().getX() == width-1){
+            hero.setPosition(new Position(Math.abs(width -2 - hero.getPosition().getX()), hero.getPosition().getY()));
+            gameMap.changeArena(hero);
+        }
+        if (hero.getPosition().getY() == 0 || hero.getPosition().getY() == height-1){
+            hero.setPosition(new Position(hero.getPosition().getX(), Math.abs(height -2 - hero.getPosition().getY())));
+            gameMap.changeArena(hero);
+        }
+    }
+
+    private void openDoors(){
+        for (int i = 0; i < walls.size(); i++){
+            if (walls.get(i).getPosition().getX() == width/2 || walls.get(i).getPosition().getY() == height/2){
+                walls.remove(i--);
+            }
         }
     }
 }

@@ -10,14 +10,14 @@ public class Game {
 
     private boolean playing;
     private Screen screen;
-    private Arena arena;
+    private GameMap gameMap;
 
     public Game(){
         try {
             playing = true;
             Terminal terminal = new DefaultTerminalFactory().createTerminal();
             screen = new TerminalScreen(terminal);
-            arena = new Arena(this, screen.getTerminalSize().getRows(), screen.getTerminalSize().getColumns());
+            gameMap = new GameMap(this, screen.getTerminalSize().getRows(), screen.getTerminalSize().getColumns());
 
             screen.setCursorPosition(null);   // we don't need a cursor
             screen.startScreen();             // screens must be started
@@ -29,7 +29,7 @@ public class Game {
 
     private void draw() throws IOException{
         screen.clear();
-        arena.draw(screen.newTextGraphics());
+        gameMap.currentArena.draw(screen.newTextGraphics());
         screen.refresh();
     }
 
@@ -38,7 +38,7 @@ public class Game {
             try {
                 draw();
                 KeyStroke key = screen.readInput();
-                arena.processKey(key);
+                gameMap.currentArena.processKey(key);
             } catch (IOException e) {
                 e.printStackTrace();
             }
