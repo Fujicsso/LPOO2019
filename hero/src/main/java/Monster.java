@@ -3,6 +3,8 @@ import com.googlecode.lanterna.TerminalPosition;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
 
+import java.util.Random;
+
 public class Monster extends Element {
 
     Monster(int x, int y){
@@ -17,14 +19,16 @@ public class Monster extends Element {
     }
 
     Position move(Position heroPos){
-        if (position.getX() < heroPos.getX())
-            return moveRight();
-        else if (position.getY() < heroPos.getY())
-            return moveDown();
-        else if (position.getX() > heroPos.getX())
-            return moveLeft();
-        else if (position.getY() > heroPos.getY())
-            return moveUp();
+        if (new Random().nextBoolean()){
+            if (position.getX() < heroPos.getX())
+                return moveRight();
+            else if (position.getY() < heroPos.getY())
+                return moveDown();
+            else if (position.getX() > heroPos.getX())
+                return moveLeft();
+            else if (position.getY() > heroPos.getY())
+                return moveUp();
+        }
         return position;
     }
 }

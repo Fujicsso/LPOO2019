@@ -8,14 +8,16 @@ import java.io.IOException;
 
 public class Game {
 
+    private boolean playing;
     private Screen screen;
     private Arena arena;
 
     public Game(){
         try {
+            playing = true;
             Terminal terminal = new DefaultTerminalFactory().createTerminal();
             screen = new TerminalScreen(terminal);
-            arena = new Arena(screen.getTerminalSize().getRows(), screen.getTerminalSize().getColumns());
+            arena = new Arena(this, screen.getTerminalSize().getRows(), screen.getTerminalSize().getColumns());
 
             screen.setCursorPosition(null);   // we don't need a cursor
             screen.startScreen();             // screens must be started
@@ -32,17 +34,23 @@ public class Game {
     }
 
     public void run(){
-        while (true) {
+        while (playing) {
             try {
                 draw();
                 KeyStroke key = screen.readInput();
-                if (arena.processKey(key)){
-                    screen.close();
-                    break;
-                }
+                arena.processKey(key);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void exitGame(){
+        try {
+            screen.close();
+            playing = false;
+        } catch (IOException e){
+            e.printStackTrace();
         }
     }
 }

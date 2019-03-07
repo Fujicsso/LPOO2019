@@ -7,36 +7,38 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Arena {
+class Arena {
+    private Game game;
     private int height;
     private int width;
     private Hero hero;
-    private Monster monster;
+    private List<Monster> monsters;
     private List<Wall> walls;
     private List<Coin> coins;
 
-    public Arena(int height, int width){
+    Arena(Game game, int height, int width){
+        this.game = game;
         this.height = height;
         this.width = width;
         this.hero = new Hero(10, 10);
-        this.monster = new Monster(25, 15);
+        this.monsters = createMonsters();
         this.walls = createWalls();
         this.coins = createCoins();
     }
 
-    boolean processKey(KeyStroke key) {
+    void processKey(KeyStroke key) {
         if (key.getKeyType() == KeyType.ArrowDown){
-            return moveHero(hero.moveDown());
+            moveHero(hero.moveDown());
         } else if (key.getKeyType() == KeyType.ArrowUp){
-            return moveHero(hero.moveUp());
+            moveHero(hero.moveUp());
         } else if (key.getKeyType() == KeyType.ArrowLeft){
-            return moveHero(hero.moveLeft());
+            moveHero(hero.moveLeft());
         } else if (key.getKeyType() == KeyType.ArrowRight){
-            return moveHero(hero.moveRight());
+            moveHero(hero.moveRight());
         } else if (key.getKeyType() == KeyType.Character && key.getCharacter() == 'q'){
-            return true;
-        }
-        return key.getKeyType() == KeyType.EOF;
+            game.exitGame();
+        } else if (key.getKeyType() == KeyType.EOF)
+            game.exitGame();
     }
 
     void draw(TextGraphics graphics){
@@ -47,15 +49,18 @@ public class Arena {
         for (Coin coin : coins)
             coin.draw(graphics);
         hero.draw(graphics);
-        monster.draw(graphics);
+        hero.drawLives(graphics);
+        hero.drawScore(graphics);
+        for (Monster monster : monsters)
+            monster.draw(graphics);
     }
 
-    private boolean moveHero(Position position) {
+    private void moveHero(Position position) {
         if (canHeroMove(position))
             hero.setPosition(position);
         moveMonsters();
         retrieveCoin();
-        return verifyMonsterCollisions();
+        verifyMonsterCollisions();
     }
 
 
@@ -104,23 +109,51 @@ public class Arena {
         return coins;
     }
 
+    private List<Monster> createMonsters(){
+        Random random = new Random();
+        ArrayList<Monster> monsters = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Monster m = new Monster(random.nextInt(width - 2) + 1, random.nextInt(height - 2) + 1);
+            for (int j = 0; j < i; j++){
+                if (m.position.equals(monsters.get(j).position)){
+                    m.position = hero.position;
+                    i--;
+                    break;
+                }
+            }
+            if (m.position.equals(hero.position)) {
+                i--;
+                continue;
+            }
+            monsters.add(m);
+        }
+        return monsters;
+    }
+
     private void retrieveCoin() {
         for (Coin coin : coins){
             if (hero.position.equals(coin.position)) {
                 coins.remove(coin);
+                hero.increaseScore();
                 break;
             }
         }
     }
 
     private void moveMonsters(){
-        monster.setPosition(monster.move(hero.getPosition()));
+        for (Monster monster : monsters)
+            monster.setPosition(monster.move(hero.getPosition()));
     }
 
-    private boolean verifyMonsterCollisions(){
-        boolean res = monster.position.equals(hero.position);
-        if (res)
+    private void verifyMonsterCollisions(){
+        for (Monster monster : monsters)
+            if (monster.position.equals(hero.position)) {
+                hero.takeDamage();
+                break;
+            }
+        if (!hero.isAlive()) {
             System.out.println("Lost game");
-        return res;
+            game.exitGame();
+        }
     }
 }
