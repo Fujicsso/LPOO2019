@@ -1,2 +1,2 @@
 # LPOO2019
-Projetos de LPOO
+LPOO Projects
